@@ -1,0 +1,79 @@
+name: Demo Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      Action:
+        description: Terraform Action to be performed
+        type: choice
+        required: true
+        options:
+        - Plan
+        - Apply
+        - Destroy
+
+jobs:
+  install: 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+        working-directory: lambda-code
+
+  pre-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: lint and test
+        working-directory: lambda-code
+        run: |
+          npm run lint
+          npm run test
+
+      - name: remove test, coverage & dependencies not needed for deployment
+        working-directory: lambda-code
+        run: |
+          rm -rf test coverage 
+          npm prune --production
+
+  build: 
+    runs-on: ubuntu-latest
+      - name: Zip artifacts
+        run: |
+          cd lambda-code
+          zip ../lambda-nodejs.zip * -r    
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: lambda-nodejs-artifact
+          path: lambda-nodejs.zip    
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: lambda-nodejs-artifact
+
+      - name: Configure AWS Credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID && aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY && aws configure set region "us-east-1"
+
+      - name: Upload code to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 cp lambda-nodejs.zip s3://test-bucket-ashvini/
+
+        
+    

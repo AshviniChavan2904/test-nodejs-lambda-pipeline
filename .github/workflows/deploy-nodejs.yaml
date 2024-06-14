@@ -13,7 +13,7 @@ on:
         - Destroy
 
 jobs:
-  install: 
+  build: 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +25,6 @@ jobs:
       - run: npm install
         working-directory: lambda-code
 
-  pre-build:
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
       - name: lint and test
         working-directory: lambda-code
         run: |
@@ -41,10 +37,6 @@ jobs:
           rm -rf test coverage 
           npm prune --production
 
-  build: 
-    runs-on: ubuntu-latest
-    needs: pre-build
-    steps:
       - name: Zip artifacts
         run: |
           cd lambda-code

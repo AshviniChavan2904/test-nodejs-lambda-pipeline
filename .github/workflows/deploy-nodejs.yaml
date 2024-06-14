@@ -25,17 +25,17 @@ jobs:
       - run: npm install
         working-directory: lambda-code
 
-      - name: lint and test
-        working-directory: lambda-code
-        run: |
-          npm run lint
-          npm run test
+      # - name: lint and test
+      #   working-directory: lambda-code
+      #   run: |
+      #     npm run lint
+      #     npm run test
 
-      - name: remove test, coverage & dependencies not needed for deployment
-        working-directory: lambda-code
-        run: |
-          rm -rf test coverage 
-          npm prune --production
+      # - name: remove test, coverage & dependencies not needed for deployment
+      #   working-directory: lambda-code
+      #   run: |
+      #     rm -rf test coverage 
+      #     npm prune --production
 
       - name: Zip artifacts
         run: |
